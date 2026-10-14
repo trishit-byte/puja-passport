@@ -1,0 +1,11 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ headless: true, args: process.env.CHROME_GPU_ARGS.split(' '), ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] });
+const p = await (await b.newContext()).newPage();
+const msgs = new Set(); p.on('console', (m) => { const t = m.text(); if (t.startsWith('NAN') || t.includes('NaN')) msgs.add(t.slice(0, 1500)); });
+await p.goto('http://10.128.146.164:5174/?debug=1');
+await p.waitForSelector('.title-screen', { timeout: 90000 });
+console.log('title:', msgs.size);
+await p.click('.title-screen .title-buttons .btn');
+await p.waitForTimeout(6000);
+console.log([...msgs].join('\n') || 'none');
+await b.close();

@@ -1,0 +1,13 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ headless: true, args: process.env.CHROME_GPU_ARGS.split(' '), ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] });
+const ctx = await b.newContext({ viewport: { width: 1200, height: 630 }, deviceScaleFactor: 1 });
+await ctx.addInitScript(() => localStorage.setItem('anandapur.save', JSON.stringify({ tutorialDone: true })));
+const p = await ctx.newPage();
+await p.goto('http://10.128.146.164:5174/?debug=1&autostart=1');
+await p.waitForFunction(() => window.__game?.phase === 'play', null, { timeout: 90000 });
+await p.evaluate(() => { window.__anandapur.teleportTo('alor-utsav', false); });
+await p.waitForTimeout(800);
+await p.evaluate(() => { const g = window.__game; window.__anandapur.teleport(g.player.pos.x - Math.sin(g.player.yaw) * 9, g.player.pos.z - Math.cos(g.player.yaw) * 9, g.player.yaw); g.cam.yaw = g.player.yaw + Math.PI; g.cam.pitch = 0.12; g.cam.targetDistance = 6; document.querySelector('#ui').style.visibility = 'hidden'; });
+await p.waitForTimeout(3500);
+await p.screenshot({ path: 'public/og-image.jpg', type: 'jpeg', quality: 85 });
+await b.close();

@@ -1,0 +1,12 @@
+Dhak field recording (Wikimedia Commons), cut into looping segments for Anandapur: Pujo Nights.
+Edited segments are shared under the same licence.
+
+dhak-dhody.ogg  "Durga Puja Dhak Dhol" by Mamta Jagdish Dhody, CC BY-SA 4.0
+                https://commons.wikimedia.org/wiki/File:Durga_Puja_Dhak_Dhol.ogg
+
+crowd-walla.ogg  "Crowd Talking 003" (442697-SBssa-Crowd Talking 003), SoundSnap via Wikimedia Commons, CC0
+                https://commons.wikimedia.org/wiki/File:442697-SBssa-Crowd_Talking_003.wav
+                (mixed to mono, filtered, loudness-levelled and cut into a seamless 70 s loop)
+
+DJ-box songs (assets/audio/songs/) are supplied by the game's owner from assets/audio/musics/
+and are not covered by this project's licence.

@@ -1,0 +1,13 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ headless: true, args: process.env.CHROME_GPU_ARGS.split(' '), ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] });
+const p = await (await b.newContext({ viewport: { width: 1600, height: 900 } })).newPage();
+await p.goto('http://10.128.146.164:5173/?debug=1&autostart=1');
+await p.waitForFunction(() => window.__game?.phase === 'play', null, { timeout: 90000 });
+await p.evaluate(() => { document.querySelector('.tutorial [data-a=skip]')?.click(); const g = window.__game, b = g.builds.get('dhaker-taal'); const L = b.view.look, e = b.entry ?? b.darshan;
+  const pos = g.pandals ? null : null; void pos; });
+await p.evaluate(() => window.__anandapur.teleportTo('dhaker-taal', false));
+await p.waitForTimeout(500);
+await p.evaluate(() => { const g = window.__game; g.cam.yaw = g.player.yaw; g.cam.pitch = 0.05; g.cam.targetDistance = 5; window.__anandapur.teleport(g.player.pos.x - Math.sin(g.player.yaw) * 6, g.player.pos.z - Math.cos(g.player.yaw) * 6, g.player.yaw); });
+await p.waitForTimeout(1500);
+await p.screenshot({ path: 'docs/screenshots/dev/gate.png' });
+await b.close();

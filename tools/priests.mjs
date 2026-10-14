@@ -1,0 +1,10 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ headless: true, args: process.env.CHROME_GPU_ARGS.split(' '), ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] });
+const p = await (await b.newContext()).newPage();
+await p.goto('http://10.128.146.164:5174/?debug=1&autostart=1');
+await p.waitForFunction(() => window.__game?.phase === 'play', null, { timeout: 90000 });
+await p.evaluate(() => window.__anandapur.setElapsed(1.65 / 10 * 2700));
+await p.evaluate(() => { const b = window.__game.builds.get('bonedi-bari'); window.__anandapur.teleport(b.darshan.x, b.darshan.z, 0); });
+await p.waitForTimeout(800);
+console.log(JSON.stringify(await p.evaluate(() => { const g = window.__game; return { n: g.city.priests.length, pr: g.city.priests.map((q) => [q.id, q.pos.x.toFixed(1), q.pos.z.toFixed(1), q.ch.group.visible]), player: [g.player.pos.x.toFixed(1), g.player.pos.z.toFixed(1)], items: g.interactions.items.filter((i) => i.id.startsWith('aarti')).length, near: g.interactions.items.filter((i) => Math.hypot(i.pos.x - g.player.pos.x, i.pos.z - g.player.pos.z) < 6).map((i) => i.id + ':' + i.priority) }; })));
+await b.close();

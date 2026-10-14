@@ -1,0 +1,24 @@
+// End the night with no stamps, press "Try the Night Again", and check that a fresh night starts.
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ headless: true, args: process.env.CHROME_GPU_ARGS.split(' '), ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] });
+const ctx = await b.newContext({ viewport: { width: 1000, height: 700 } });
+await ctx.addInitScript(() => { if (!sessionStorage.getItem('init')) { sessionStorage.setItem('init', '1'); localStorage.clear(); localStorage.setItem('anandapur.save', JSON.stringify({ tutorialDone: true })); } });
+const p = await ctx.newPage();
+await p.goto((process.argv[2] ?? 'http://10.128.146.164:5173/') + '?debug=1');
+await p.waitForSelector('.title-screen', { timeout: 90000 });
+await p.click('.title-screen .title-buttons .btn');
+await p.waitForFunction(() => window.__game?.phase === 'play', null, { timeout: 60000 });
+await p.evaluate(() => window.__anandapur.completePandal('bonedi-bari'));
+await p.evaluate(() => window.__anandapur.setElapsed(2699.5));
+await p.waitForSelector('.nightover [data-a=retry]', { timeout: 20000 });
+console.log('night over shown:', JSON.stringify(await p.evaluate(() => window.__anandapur.night())));
+await p.click('.nightover [data-a=retry]');
+await p.waitForTimeout(1500);
+await p.waitForFunction(() => window.__game?.phase === 'play' || document.querySelector('.nightover'), null, { timeout: 90000 });
+await p.waitForTimeout(3000);
+const st = await p.evaluate(() => ({ night: window.__anandapur.night(), stamps: window.__anandapur.getState().stamps, phase: window.__game.phase, nightOverCard: !!document.querySelector('.nightover'), titleShown: !!document.querySelector('.title-screen:not(.hidden)') }));
+console.log('after retry:', JSON.stringify(st));
+const ok = st.night.elapsed < 30 && st.night.status === 'active' && st.stamps.length === 0 && st.phase !== 'finale' && !st.nightOverCard;
+console.log(ok ? 'PASS: fresh night' : 'FAIL: not a fresh start');
+await b.close();
+process.exit(ok ? 0 : 1);

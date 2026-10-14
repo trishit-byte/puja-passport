@@ -1,0 +1,30 @@
+import { chromium } from '@playwright/test';
+import { writeFileSync } from 'node:fs';
+const b = await chromium.launch({ headless: true, args: [...process.env.CHROME_GPU_ARGS.split(' '), '--autoplay-policy=no-user-gesture-required'], ignoreDefaultArgs: ['--enable-unsafe-swiftshader', '--mute-audio'] });
+const ctx = await b.newContext({ viewport: { width: 1600, height: 900 } });
+await ctx.addInitScript(() => localStorage.setItem('anandapur.save', JSON.stringify({ tutorialDone: true })));
+const p = await ctx.newPage();
+const errs = []; p.on('pageerror', (e) => errs.push(e.message)); p.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
+await p.goto('http://10.128.146.164:5173/?debug=1');
+await p.waitForSelector('.title-screen', { timeout: 90000 });
+await p.click('.title-screen [data-a=start]');
+await p.waitForFunction(() => window.__game.phase === 'play');
+const A = (fn, ...a) => p.evaluate(([fn, a]) => window.__anandapur[fn](...a), [fn, a]);
+await p.waitForTimeout(2500);
+const boxes = await A('djBoxes');
+for (const bx of boxes) console.log('box', bx.pandal, Math.round(bx.x), Math.round(bx.z), 'dancers', bx.dancers, '|', bx.playing);
+const lvl = async () => { let s = 0; for (let i = 0; i < 15; i++) { s += await A('audioLevel'); await p.waitForTimeout(100); } return (s / 15).toFixed(1); };
+const bx = boxes[0];
+for (const [name, x, z] of [['on a DJ dance floor', bx.x + 3, bx.z], ['inside Dhaker Taal', 34, -38], ['between pandals (street)', -150, 30], ['30 m from Dhaker Taal gate', 34, -88]]) {
+  await A('teleport', x, z, 0); await p.waitForTimeout(2500);
+  console.log(name.padEnd(28), 'RMS dBFS', await lvl());
+}
+await A('teleport', bx.x + 6, bx.z + 6, Math.atan2(-6, -6)); await A('setStage', 2);
+await p.evaluate(() => { window.__game.cam.pitch = 0.2; window.__game.cam.targetDistance = 7; });
+await p.waitForTimeout(3000);
+await p.screenshot({ path: 'docs/screenshots/dev/dj-busy.png' });
+console.log('render', JSON.stringify(await A('renderInfo')), 'fps', (await A('getState')).fps.toFixed(1));
+const r = await A('recordAudio', 12000);
+writeFileSync('docs/audio-sample-dj-song.webm', Buffer.from(r.b64, 'base64'));
+console.log(errs.join('\n') || 'no errors');
+await b.close();

@@ -1,0 +1,18 @@
+import { chromium } from '@playwright/test';
+import { writeFileSync } from 'node:fs';
+const b = await chromium.launch({ headless: true, args: [...process.env.CHROME_GPU_ARGS.split(' '), '--autoplay-policy=no-user-gesture-required'], ignoreDefaultArgs: ['--enable-unsafe-swiftshader', '--mute-audio'] });
+const ctx = await b.newContext();
+await ctx.addInitScript(() => localStorage.setItem('anandapur.save', JSON.stringify({ tutorialDone: true })));
+const p = await ctx.newPage();
+await p.goto('http://10.128.146.164:5174/?debug=1');
+await p.waitForSelector('.title-screen', { timeout: 90000 });
+await p.click('.title-screen [data-a=start]');
+await p.waitForFunction(() => window.__game.phase === 'play');
+const A = (fn, ...a) => p.evaluate(([fn, a]) => window.__anandapur[fn](...a), [fn, a]);
+const box = (await A('djBoxes'))[0];
+await A('teleport', box.x + 5, box.z + 2, 0);
+await p.waitForTimeout(3000);
+const r = await A('recordAudio', 12000);
+writeFileSync('docs/audio-sample-dj-box.webm', Buffer.from(r.b64, 'base64'));
+console.log('dj box near', box.pandal, 'playing', (await A('djBoxes'))[0].playing);
+await b.close();

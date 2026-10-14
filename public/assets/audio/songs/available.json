@@ -1,0 +1,54 @@
+{
+  "songs": [
+    {
+      "file": "01.mp3",
+      "title": "Aar Koto Raat Eka Thakbo",
+      "artist": "Asha Bhosle",
+      "source": "Aar Koto Raat Eka Thakbo Chokher Aloye Bengali Movie Song Asha Bhosle.mp3"
+    },
+    {
+      "file": "02.mp3",
+      "title": "Chirodini Tumi Je Aamar",
+      "artist": "Kishore Kumar",
+      "source": "Chirodini Tumi Je Aamar Kishore Kumar Bappi Lahiri Amar Sanghi Best Bengali Romantic Song.mp3"
+    },
+    {
+      "file": "03.mp3",
+      "title": "Dhaker Taley",
+      "artist": "Jeet Gannguli",
+      "source": "Dhaker Taley Poran Jai Jolia Re Dev Subhashree Abhijeet Parinita Sudipto Jeet Gannguli SVF.mp3"
+    },
+    {
+      "file": "04.mp3",
+      "title": "Dugga Elo",
+      "artist": "Monali Thakur",
+      "source": "Dugga Elo - Official Video Monali Thakur Guddu Indranil Das.mp3"
+    },
+    {
+      "file": "05.mp3",
+      "title": "Dugga Maa Asche",
+      "artist": "Kiran Mazumder",
+      "source": "Dugga Maa Asche Official Video - দুগ্গা মা আসছে Kiran Mazumder Pujo Song Ft. Soumya Mukherjee.mp3",
+      "trim": {
+        "start": 50,
+        "end": null
+      }
+    },
+    {
+      "file": "06.mp3",
+      "title": "Ekbar Nacho Maa",
+      "artist": "Dohar",
+      "source": "EKBAR NACHO MAA DOHAR KALIKAPRASAD SHYAMA SANGEET DOHARFOLK.mp3"
+    },
+    {
+      "file": "07.mp3",
+      "title": "Gold Printer Sari Pore",
+      "artist": "Mita Chatterjee",
+      "source": "Gold Printer Sari Pore Mita Chatterjee Bengali Songs Debjit Sanku Bangla Gaan FFR Bengali.mp3",
+      "trim": {
+        "start": 50,
+        "end": null
+      }
+    }
+  ]
+}

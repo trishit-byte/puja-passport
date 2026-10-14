@@ -1,0 +1,32 @@
+{
+  "name": "puja-passport",
+  "version": "1.0.0",
+  "description": "Puja Passport — a cozy 3D Durga Puja pandal-hopping game set in Anandapur",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:public": "tsc --noEmit && PUBLIC_BUILD=1 vite build",
+    "preview": "vite preview --port 4173",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit",
+    "predev": "node scripts/prepare-music.mjs",
+    "prebuild": "node scripts/prepare-music.mjs"
+  },
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@fontsource/baloo-2": "^5.3.0",
+    "@fontsource/baloo-da-2": "^5.3.0",
+    "@fontsource/noto-sans-bengali": "^5.3.0",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@types/three": "^0.170.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
+  },
+  "private": true
+}

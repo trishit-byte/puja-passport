@@ -1,0 +1,14 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ headless: true, args: process.env.CHROME_GPU_ARGS.split(' '), ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] });
+const ctx = await b.newContext({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
+const p = await ctx.newPage();
+await p.goto('http://10.128.146.164:5174/');
+await p.waitForSelector('.title-screen', { timeout: 90000 }); await p.waitForTimeout(1200);
+await p.tap('[data-a=outfit]'); await p.waitForTimeout(600);
+await p.screenshot({ path: 'docs/screenshots/dev/menu-outfit.png' });
+const fits = await p.evaluate(() => { const c = document.querySelector('.outfit-wrap .pause-card').getBoundingClientRect(); return { top: c.top, bottom: c.bottom, h: innerHeight, sw: document.querySelector('.outfit-wrap .pause-card').scrollHeight, ch: document.querySelector('.outfit-wrap .pause-card').clientHeight }; });
+console.log('outfit', JSON.stringify(fits));
+await p.tap('[data-a=done]'); await p.waitForTimeout(400);
+await p.tap('[data-a=settings]'); await p.waitForTimeout(600);
+await p.screenshot({ path: 'docs/screenshots/dev/menu-settings.png' });
+await b.close();

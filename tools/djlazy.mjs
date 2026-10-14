@@ -1,0 +1,27 @@
+// DJ songs stream only near a box, and resume where they left off.
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ headless: true, args: [...process.env.CHROME_GPU_ARGS.split(' '), '--autoplay-policy=no-user-gesture-required'], ignoreDefaultArgs: ['--enable-unsafe-swiftshader', '--mute-audio'] });
+const ctx = await b.newContext({ viewport: { width: 1000, height: 700 } });
+await ctx.addInitScript(() => localStorage.setItem('anandapur.save', JSON.stringify({ tutorialDone: true })));
+const p = await ctx.newPage();
+const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+await p.goto((process.argv[2] ?? 'http://10.128.146.164:5173/') + '?debug=1');
+await p.waitForSelector('.title-screen', { timeout: 90000 });
+await p.click('.title-screen .title-buttons .btn');
+await p.waitForFunction(() => window.__game.phase === 'play');
+await p.mouse.click(500, 350);
+await p.waitForTimeout(3000);
+const st = () => p.evaluate(() => { const djs = window.__game.audio.djs; return { els: djs.filter((d) => d.el).length, active: djs.filter((d) => d.active).length, t0: djs[0].el?.currentTime ?? null, paused: djs[0].el?.paused ?? null, title: djs[0].title, lvl: djs[0].level().toFixed(3) }; });
+console.log('start (far)', JSON.stringify(await st()));
+const box = (await p.evaluate(() => window.__anandapur.djBoxes()))[0];
+await p.evaluate(([x, z]) => window.__anandapur.teleport(x + 2, z, 0), [box.x, box.z]);
+await p.waitForTimeout(6000);
+const near = await st(); console.log('near box 0', JSON.stringify(near));
+await p.evaluate((box) => window.__anandapur.teleport(box.x + 60, box.z + 60, 0), box);
+await p.waitForTimeout(2000);
+console.log('walked away', JSON.stringify(await st()));
+await p.evaluate(([x, z]) => window.__anandapur.teleport(x + 2, z, 0), [box.x, box.z]);
+await p.waitForTimeout(3000);
+console.log('back near', JSON.stringify(await st()));
+console.log('errors', errs);
+await b.close();

@@ -1,0 +1,11 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch({ headless: true, args: process.env.CHROME_GPU_ARGS.split(' '), ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] });
+const p = await (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage();
+await p.addInitScript(() => localStorage.setItem('anandapur.save', JSON.stringify({ tutorialDone: true })));
+await p.goto('http://10.128.146.164:5174/?debug=1&autostart=1');
+await p.waitForFunction(() => window.__game?.phase === 'play', null, { timeout: 90000 });
+const k = Number(process.argv[2] || 0);
+await p.evaluate((k) => { const g = window.__game; const bx = g.djs.boxes[k]; const d = { x: bx.x, z: bx.z }; const yaw = bx.group.rotation.y; window.__anandapur.teleport(d.x + Math.sin(yaw) * 7, d.z + Math.cos(yaw) * 7, 0); const pos = g.player.pos.clone(); pos.x = d.x + Math.sin(yaw + 0.3) * 7.5; pos.z = d.z + Math.cos(yaw + 0.3) * 7.5; pos.y = 3.2; const look = { x: d.x, y: 1.2, z: d.z }; g.cam.override = { pos, look: pos.clone().set(d.x, 1.2, d.z) }; document.querySelector('#ui').style.visibility = 'hidden'; }, k);
+await p.waitForTimeout(2000);
+await p.screenshot({ path: `docs/screenshots/dev/dj-${k}.png` });
+await b.close();

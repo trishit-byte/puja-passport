@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.chromelibs/
+tools/ref/out/
+test-results/
+playwright-report/
+.tools-ffmpeg/
+.tools-git/
+.downloads/
+public/assets/audio/musics/
+docs/screenshots/dev/
+test-results/
+docs/reference-shots/
+docs/screenshots/*.png
+docs/screenshots/*/
+!docs/screenshots/gallery/

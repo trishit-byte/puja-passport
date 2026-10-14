@@ -1,0 +1,11 @@
+import { chromium, devices } from '@playwright/test';
+const b = await chromium.launch({ headless: true, args: process.env.CHROME_GPU_ARGS.split(' '), ignoreDefaultArgs: ['--enable-unsafe-swiftshader'] });
+const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true, userAgent: devices['iPhone 13'].userAgent });
+await ctx.addInitScript(() => localStorage.setItem('anandapur.save', JSON.stringify({ tutorialDone: true })));
+const p = await ctx.newPage();
+await p.goto('http://10.128.146.164:5173/?debug=1&autostart=1');
+await p.waitForFunction(() => window.__game?.phase === 'play', null, { timeout: 120000 });
+await p.evaluate(() => { const pd = window.__anandapur.pandals.find((x) => x.id === 'bonedi-bari'); const fx = Math.sin(pd.facing), fz = Math.cos(pd.facing); const ex = pd.x + fx * (pd.radius + 1.5), ez = pd.z + fz * (pd.radius + 1.5); const px = ex + fx * 14, pz = ez + fz * 14; const yaw = Math.atan2(ex - px, ez - pz); window.__anandapur.teleport(px, pz, yaw); window.__game.cam.snapBehind(yaw); });
+await p.waitForTimeout(1500);
+console.log(await p.evaluate(() => { const g = window.__game; g.guide.updateMatrixWorld(true); return JSON.stringify({ vis: g.guide.visible, player: g.player.pos.toArray().map((v) => +v.toFixed(2)), chev: g.guideChevrons.map((c) => ({ w: c.getWorldPosition(new g.player.pos.constructor()).toArray().map((v) => +v.toFixed(2)), s: +c.scale.x.toFixed(2), op: +c.children[1].material.opacity.toFixed(2), vis: c.visible })) }); }));
+await b.close();

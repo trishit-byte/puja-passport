@@ -522,7 +522,8 @@ export class Game {
   private isTouch = false;
   frame() {
     const t0 = performance.now();
-    const dt = Math.min(0.05, this.clock.getDelta());
+    // allow long frames (slow phones) to advance the world fully, so walking isn't slow-motion
+    const dt = Math.min(0.1, this.clock.getDelta());
     const nowReal = performance.now();
     const realDt = (nowReal - this.lastReal) / 1000;
     this.lastReal = nowReal;

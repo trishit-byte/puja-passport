@@ -353,12 +353,12 @@ export class DjBoxes {
         radius: 5.5,
         priority: 1.2,
         // E: dance (until you walk away); E again while dancing: ask the DJ for another song
-        prompt: () => (actions.is('dance') ? 'Ask the DJ for another song' : 'Dance'),
+        prompt: () => (actions.is('dance') ? 'Change Music' : 'Dance'),
         act: () => {
           if (!actions.is('dance')) {
             const moves: ('dance' | 'nach' | 'dhunuchi')[] = ['dance', 'nach', 'dance'];
             actions.start({ id: 'dance', pose: moves[Math.floor(Math.random() * moves.length)] });
-            ui.toast('You join the dance! Walk away to stop · E asks the DJ for the next song.', { bn: '♪' });
+            ui.toast(document.documentElement.classList.contains('touch') ? 'You join the dance! Walk away to stop · tap Change Music for the next song.' : 'You join the dance! Walk away to stop · E changes the music.', { bn: '♪' });
             return;
           }
           const ch = audio.djs[i];

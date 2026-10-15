@@ -81,12 +81,13 @@ export class TouchControls {
     }
     this.knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
     const mag = Math.min(1, d / this.R);
-    const dead = 0.12;
-    const k = mag < dead ? 0 : (mag - dead) / (1 - dead);
+    const dead = 0.1;
+    // full walking speed at ~60% of the stick's travel: thumbs rarely push to the very edge
+    const k = mag < dead ? 0 : Math.min(1, (mag - dead) / 0.5);
     const nx = d > 0 ? dx / d : 0, ny = d > 0 ? dy / d : 0;
     this.last = { x: nx * k, y: -ny * k };
-    // auto-sprint: pushed well forward (within ~40° of straight ahead) for 2 s
-    const forward = k > 0.7 && -ny > 0.75;
+    // auto-sprint: pushed forward (within ~55° of straight ahead, half-way out or more) for 2 s
+    const forward = mag > 0.45 && -ny > 0.57;
     if (forward && !this.fwdSince) {
       this.fwdSince = performance.now();
       this.sprintTimer = window.setTimeout(() => this.setSprint(true), 2000);
@@ -123,9 +124,43 @@ export class TouchControls {
   }
 }
 
-function shorten(s: string) {
-  const first = s.split(/ — |: | \(/)[0].replace(/ to Ma Durga$/, '');
-  return first.length > 22 ? first.slice(0, 20) + '…' : first;
+/** The action button is small: every prompt becomes a short label (two words at most). */
+const SHORT: [RegExp, string | ((m: RegExpMatchArray) => string)][] = [
+  [/^Take a selfie/i, 'Take Selfie'],
+  [/^Talk to/i, 'Talk'],
+  [/^Drink cha/i, 'Drink Cha'],
+  [/^Eat Kathi/i, 'Eat Roll'],
+  [/^Eat (\S+)/i, (m) => `Eat ${m[1]}`],
+  [/^Offer pranam/i, 'Offer Pranam'],
+  [/^Offer flowers/i, 'Offer Flowers'],
+  [/dhunuchi/i, 'Dhunuchi Naach'],
+  [/^Join the aarti/i, 'Join Aarti'],
+  [/^Sit/i, 'Sit'],
+  [/^Change Music/i, 'Change Music'],
+  [/^Dance/i, 'Dance'],
+  [/bell/i, 'Ring Bell'],
+  [/^Look closer/i, 'Look Closer'],
+  [/^Look at/i, 'Look'],
+  [/^Light the (Dhruvatara|Kalpurush|Saptarshi)/i, 'Light Stars'],
+  [/^Light the deepastambha/i, 'Light Lamp'],
+  [/^Light the/i, 'Light Up'],
+  [/^Wake the/i, 'Wake Lantern'],
+  [/^Place a postcard/i, 'Place Postcard'],
+  [/^Take a clay lamp/i, 'Take Lamp'],
+  [/^Float your lamp/i, 'Float Lamp'],
+  [/dhaki|dhak/i, 'Play Dhak'],
+  [/^Touch the/i, 'Touch'],
+  [/^Blow the shankha/i, 'Blow Shankha'],
+  [/^Finish the Night/i, 'Watch Sunrise'],
+];
+export function shorten(s: string) {
+  for (const [re, out] of SHORT) {
+    const m = s.match(re);
+    if (m) return typeof out === 'string' ? out : out(m);
+  }
+  // anything else: its first two words
+  const w = s.split(/ — |: | \(|, /)[0].split(' ').slice(0, 2).join(' ');
+  return w.length > 14 ? w.slice(0, 13) + '…' : w;
 }
 
 export function isTouchDevice() {

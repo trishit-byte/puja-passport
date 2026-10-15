@@ -512,3 +512,7 @@ html.touch .touch-only { display: block; }
   .ld-art { height: 36vh; }
   .ld-loading { margin-top: 2px; font-size: 13px; }
 }
+/* the speaker's name tab sits on top of the dialogue box, never behind it */
+.dlg-name { z-index: 2; }
+/* touch screens: no keyboard hints (Space, E…) — the on-screen buttons do it */
+html.touch .dlg-hint, html.touch #ui kbd { display: none; }

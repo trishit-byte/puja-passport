@@ -301,7 +301,8 @@ export class Game {
     const unlock = () => {
       if (this.phase !== 'title') this.audio.start(this.city.dhakSpots(), { x: 40, z: 108 }).then(() => this.audio.applySettings(this.data.audio));
     };
-    window.addEventListener('pointerdown', unlock);
+    // (iOS counts the end of a tap, not its start, as permission to play sound)
+    for (const ev of ['pointerdown', 'touchend', 'click', 'keydown']) window.addEventListener(ev, unlock);
     window.addEventListener('keydown', unlock);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) {

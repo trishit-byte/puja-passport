@@ -11,6 +11,47 @@
  */
 import type { AudioEngine } from './AudioEngine';
 
+/**
+ * Song players, shared by all DJ boxes. Phones (iOS Safari above all) only let an <audio> element
+ * play if it was first played inside a tap, so a fresh element made when you walk up to a DJ box
+ * stays silent there. Instead a few elements are unlocked during the "Start" tap (each plays a
+ * moment of silence) and the boxes borrow them; each keeps its one Web Audio source node.
+ */
+const SILENCE = 'data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YSADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
+interface Player { el: HTMLAudioElement; node: MediaElementAudioSourceNode | null; busy: boolean; unlocked?: boolean }
+const players: Player[] = [];
+export function unlockSongPlayers(n = 3) {
+  while (players.length < n) {
+    const el = new Audio();
+    el.crossOrigin = 'anonymous';
+    el.preload = 'auto';
+    el.setAttribute('playsinline', '');
+    players.push({ el, node: null, busy: false });
+  }
+  // (re)try any not yet unlocked — this must run inside a tap, so it's called on every one
+  for (const p of players) {
+    if (p.unlocked || p.busy) continue;
+    p.el.src = SILENCE;
+    p.el.play().then(() => {
+      p.unlocked = true;
+      if (!p.busy) p.el.pause();
+    }).catch(() => {});
+  }
+}
+function borrowPlayer(): Player {
+  let p = players.find((x) => !x.busy);
+  if (!p) {
+    // more boxes audible at once than unlocked players (desktop has no such limit)
+    const el = new Audio();
+    el.crossOrigin = 'anonymous';
+    el.preload = 'auto';
+    p = { el, node: null, busy: false };
+    players.push(p);
+  }
+  p.busy = true;
+  return p;
+}
+
 export interface SongEntry {
   file: string;
   title: string;
@@ -88,6 +129,7 @@ export class DjChannel {
    * dozen MP3 streams at once.
    */
   private track: { entry: SongEntry; onEnded: () => void; at: number } | null = null;
+  private player: Player | null = null;
 
   playSong(entry: SongEntry, index: number, onEnded: () => void) {
     this.stopSong();
@@ -100,13 +142,15 @@ export class DjChannel {
   private openTrack() {
     const tr = this.track;
     if (!tr || this.el) return;
-    const el = new Audio(`assets/audio/songs/${tr.entry.file}`);
-    el.crossOrigin = 'anonymous';
-    el.preload = 'auto';
-    el.addEventListener('ended', tr.onEnded);
-    if (tr.at > 0) el.addEventListener('loadedmetadata', () => (el.currentTime = Math.min(tr.at, Math.max(0, el.duration - 1))), { once: true });
+    const p = borrowPlayer();
+    const el = p.el;
+    el.onended = tr.onEnded;
+    el.onloadedmetadata = tr.at > 0 ? () => (el.currentTime = Math.min(tr.at, Math.max(0, el.duration - 1))) : null;
+    el.src = `assets/audio/songs/${tr.entry.file}`;
     this.el = el;
-    this.media = this.ctx.createMediaElementSource(el);
+    this.player = p;
+    if (!p.node) p.node = this.ctx.createMediaElementSource(el);
+    this.media = p.node;
     this.media.connect(this.out);
     el.play().catch(() => {});
   }
@@ -116,9 +160,13 @@ export class DjChannel {
     if (!this.el) return;
     if (this.track) this.track.at = this.el.currentTime;
     this.el.pause();
+    this.el.onended = null;
+    this.el.onloadedmetadata = null;
     this.el.removeAttribute('src');
     this.el.load();
     this.media?.disconnect();
+    if (this.player) this.player.busy = false;
+    this.player = null;
     this.el = null;
     this.media = null;
   }

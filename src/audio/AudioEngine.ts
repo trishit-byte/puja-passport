@@ -8,7 +8,7 @@
  * The AudioContext is only created after a user gesture (Start button).
  */
 import { DHAK_FILES, DHAK_CUTS, type DhakFile } from '../data/dhakCuts';
-import { DjChannel, type SongEntry } from './DjMusic';
+import { DjChannel, unlockSongPlayers, type SongEntry } from './DjMusic';
 
 export interface AudioSettings {
   master: number;
@@ -105,6 +105,15 @@ export class AudioEngine {
 
   /** Must be called from a user gesture. */
   async start(spots: SoundSpot[], river: { x: number; z: number }) {
+    // still inside the Start tap here: unlock the song players and set the audio up as media
+    // playback, so the iPhone ring/silent switch doesn't mute the game
+    unlockSongPlayers();
+    try {
+      const as = (navigator as any).audioSession;
+      if (as) as.type = 'playback';
+    } catch {
+      /* not supported */
+    }
     if (!this.ctx) {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       if (!AC) return;
@@ -149,7 +158,19 @@ export class AudioEngine {
       this.riverLoop(this.riverSrc);
     }
     if (this.ctx.state !== 'running') await this.ctx.resume().catch(() => {});
+    if (!this.wakeHooked) {
+      // phones suspend audio on calls, app switches and screen locks: pick it up again on the
+      // next touch or when the page is shown
+      this.wakeHooked = true;
+      const wake = (e?: Event) => {
+        if (e && e.type !== 'visibilitychange') unlockSongPlayers();
+        if (this.ctx && this.ctx.state !== 'running' && !document.hidden) this.ctx.resume().catch(() => {});
+      };
+      for (const ev of ['touchend', 'pointerup', 'click', 'keydown']) document.addEventListener(ev, wake, { passive: true });
+      document.addEventListener('visibilitychange', wake);
+    }
   }
+  private wakeHooked = false;
 
   applySettings(s: Partial<AudioSettings> = {}) {
     Object.assign(this.settings, s);

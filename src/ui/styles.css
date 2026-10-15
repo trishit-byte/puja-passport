@@ -494,3 +494,21 @@ html.touch .touch-only { display: block; }
 @media (max-height: 520px) and (orientation: landscape) {
   .compass { top: calc(8px + env(safe-area-inset-top)); width: min(34vw, 280px); }
 }
+/* loading: the city's name in three scripts on top, "Loading…" at the bottom */
+.ld-city { text-align: center; line-height: 1.05; margin-bottom: 4px; }
+.ld-city-bn { font-size: clamp(40px, 6vw, 64px); font-weight: 800; color: var(--gold-2, #e8c25a); text-shadow: 0 3px 0 #6e0b12, 0 0 28px rgba(255, 170, 60, 0.55); line-height: 1.25; }
+.ld-city-hi { font-family: 'Baloo 2', 'Baloo Da 2', sans-serif; font-size: clamp(20px, 2.8vw, 28px); font-weight: 800; color: #ffd9a0; }
+.ld-city-en { font-size: clamp(14px, 1.9vw, 19px); font-weight: 800; letter-spacing: 0.4em; margin-left: 0.4em; color: #fff3d6; opacity: 0.9; }
+.ld-loading { margin-top: 8px; font-size: 16px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #fff3d6; }
+.ld-loading span { animation: ld-dot 1.2s infinite; opacity: 0.2; }
+.ld-loading span:nth-child(2) { animation-delay: 0.2s; }
+.ld-loading span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes ld-dot { 40% { opacity: 1; } }
+@media (max-height: 520px) {
+  .ld-city { display: flex; gap: 12px; align-items: baseline; justify-content: center; margin-bottom: 0; }
+  .ld-city-bn { font-size: 28px; }
+  .ld-city-hi { font-size: 18px; }
+  .ld-city-en { font-size: 13px; }
+  .ld-art { height: 36vh; }
+  .ld-loading { margin-top: 2px; font-size: 13px; }
+}

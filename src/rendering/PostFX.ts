@@ -113,18 +113,22 @@ const GradeShader = {
     uVignette: { value: 0.22 },
     uGrain: { value: 0.01 },
     uSat: { value: 1.32 },
+    uContrast: { value: 1.0 },
+    uLift: { value: 0.0 },
     uShadowTint: { value: new THREE.Color(0.95, 0.92, 1.15) },
     uHighTint: { value: new THREE.Color(1.1, 1.0, 0.88) },
   },
   vertexShader: quadVert,
   fragmentShader: /* glsl */ `
-  uniform sampler2D tDiffuse; uniform float uTime, uVignette, uGrain, uSat; uniform vec3 uShadowTint, uHighTint;
+  uniform sampler2D tDiffuse; uniform float uTime, uVignette, uGrain, uSat, uContrast, uLift; uniform vec3 uShadowTint, uHighTint;
   varying vec2 vUv;
   float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); }
   void main(){
     vec3 c = texture2D(tDiffuse, vUv).rgb;
     float l = dot(c, vec3(0.2126,0.7152,0.0722));
     c = mix(vec3(l), c, uSat);
+    c = pow(max(c, 0.0) / 0.18, vec3(uContrast)) * 0.18; // contrast about mid-grey (scene-linear)
+    c += uLift * (1.0 - smoothstep(0.0, 0.25, l)) * (c + 0.02); // open up the deepest shadows only
     c *= mix(uShadowTint, uHighTint, smoothstep(0.05, 0.8, l));
     vec2 q = vUv - 0.5; c *= 1.0 - uVignette * dot(q, q) * 2.2;
     c += (h(vUv * 913.0 + fract(uTime) * 37.0) - 0.5) * uGrain * (0.3 + l);

@@ -111,15 +111,13 @@ tools/         Dev scripts (screenshots, perf probes, audio checks)
 - [Game design document](docs/game-design.md)
 - [Technical architecture](docs/technical-architecture.md)
 - [Durga Puja research](docs/durga-puja-research.md)
-- [Reference analysis (messenger.abeto.co)](docs/reference-analysis.md)
 
 ## Credits and licences
 
 - Code, procedural models, SVG stamps and synthesised audio are original to this project.
-- Dhak recording: Mamta Jagdish Dhody, CC BY-SA 4.0 (see `public/assets/audio/CREDITS.txt`).
+- Dhak recording: Mamta Jagdish Dhody, CC BY-SA 4.0; crowd recording "Crowd Talking 003", CC0 (see `public/assets/audio/CREDITS.txt`).
 - Fonts: **Baloo Da 2** and **Baloo 2** by Ek Type, SIL Open Font License 1.1 (via @fontsource). They are self-hosted.
 - Engine: [three.js](https://threejs.org) (MIT).
-- Inspired by the *feel* of [Messenger by Abeto](https://messenger.abeto.co/). No code, assets or designs from it are used.
 
 *Anandapur and its pandals are fictional. Durga Puja is a living tradition inscribed by UNESCO
 in 2021; this game is a loving tribute, not a depiction of real worship.*

@@ -14,6 +14,8 @@ import { toPlanet } from '../utils/planet';
 import { ensureIndex, releaseAfterUpload } from '../utils/geometry';
 
 const CELL = 35;
+/** Parts smaller than this (bounding radius, m) count as fine detail. */
+const FINE_R = 0.3;
 
 interface Entry {
   t: THREE.BufferGeometry;
@@ -24,6 +26,8 @@ interface Entry {
 interface Bucket {
   mat: THREE.Material;
   shadow: boolean;
+  /** Small parts only (grille bars, bricks, balusters…): drawn near, skipped where sub-pixel. */
+  fine?: boolean;
   coloured: boolean;
   textured: boolean;
   /** Any colour component above 1 (HDR glow for bloom): colours then stay float. */
@@ -65,9 +69,11 @@ export class Batcher {
     const coloured = !!col || !!t.attributes.color;
     const c = _v.copy(t.boundingSphere!.center).applyMatrix4(matrix);
     const shadow = opts.shadow ?? true;
-    const key = `${mat.uuid}|${coloured ? 'c' : ''}|${Math.floor(c.x / CELL)},${Math.floor(c.z / CELL)}|${shadow}`;
+    // small parts go in their own buckets so distant cells can skip them (see World.cullHorizon)
+    const fine = t.boundingSphere!.radius * matrix.getMaxScaleOnAxis() < FINE_R;
+    const key = `${mat.uuid}|${coloured ? 'c' : ''}|${Math.floor(c.x / CELL)},${Math.floor(c.z / CELL)}|${shadow}|${fine ? 'f' : ''}`;
     let b = this.buckets.get(key);
-    if (!b) this.buckets.set(key, (b = { mat, shadow, coloured, textured, hdr: false, verts: 0, indices: 0, box: new THREE.Box3(), items: [] }));
+    if (!b) this.buckets.set(key, (b = { mat, shadow, fine, coloured, textured, hdr: false, verts: 0, indices: 0, box: new THREE.Box3(), items: [] }));
     b.items.push({ t, m: matrix.clone(), col });
     b.verts += t.attributes.position.count;
     b.indices += t.index!.count;
@@ -113,6 +119,7 @@ export class Batcher {
       mesh.userData.flatCenter = flat;
       mesh.userData.flatRadius = flatSphere.radius;
       mesh.userData.maxY = b.box.max.y;
+      mesh.userData.fine = !!b.fine;
       mesh.castShadow = b.shadow;
       mesh.receiveShadow = true;
       parent.add(mesh);

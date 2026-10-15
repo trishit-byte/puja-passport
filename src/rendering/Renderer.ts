@@ -80,7 +80,8 @@ export class Renderer {
    * Adaptive resolution: keep frame time near 60 fps by nudging the render scale between 0.55 and 1.
    * Changes are small and infrequent so they are not noticeable, and motion stays smooth.
    */
-  adapt(dt: number) {
+  /** Adapt the render scale to frame time; `target` is the frame budget (1/60, or 1/30 when capped). */
+  adapt(dt: number, target = 1 / 60) {
     this.frameTimes.push(dt);
     if (this.frameTimes.length > 90) this.frameTimes.shift();
     this.adaptT += dt;
@@ -90,8 +91,8 @@ export class Renderer {
     const p80 = sorted[Math.floor(sorted.length * 0.8)];
     let next = this.dprScale;
     // never go below 80% of native: a slightly lower frame rate beats a blurry picture
-    if (p80 > 1 / 42) next = Math.max(0.8, this.dprScale - 0.05);
-    else if (p80 < 1 / 52 && this.dprScale < 1) next = Math.min(1, this.dprScale + 0.1);
+    if (p80 > target * 1.43) next = Math.max(0.8, this.dprScale - 0.05);
+    else if (p80 < target * 1.15 && this.dprScale < 1) next = Math.min(1, this.dprScale + 0.1);
     if (next !== this.dprScale) {
       this.dprScale = next;
       this.resize();

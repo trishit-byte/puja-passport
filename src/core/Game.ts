@@ -95,13 +95,16 @@ export class Game {
       // phones and tablets: start on Medium (smaller shadow map, lower render scale); High is one tap away
       this.data.settings.quality = 'medium';
     }
-    document.documentElement.classList.toggle('touch', isTouchDevice());
+    this.isTouch = isTouchDevice();
+    document.documentElement.classList.toggle('touch', this.isTouch);
     this.progress = new Progress(this.data);
     this.night = new SimClock(this.data.session.elapsed);
     this.night.pause('title');
 
     this.renderer = new Renderer(canvas, this.scene);
     this.renderer.setQuality(this.data.settings.quality);
+    this.renderer.fx.grade.uniforms.uContrast.value = this.isTouch ? 1.08 : 1.03;
+    this.renderer.fx.grade.uniforms.uLift.value = this.isTouch ? 0.35 : 0.1;
     this.scene.add(this.sky.mesh);
     this.lighting = new Lighting(this.scene, this.sky, QUALITY[this.data.settings.quality].lights);
     this.lighting.setShadowQuality(QUALITY[this.data.settings.quality].shadow);
@@ -515,6 +518,7 @@ export class Game {
     loop();
   }
 
+  private isTouch = false;
   frame() {
     const t0 = performance.now();
     const dt = Math.min(0.05, this.clock.getDelta());
@@ -602,12 +606,15 @@ export class Game {
     this.updateGuide();
     this.sky.follow(this.renderer.camera, this.cam.flatPos.x, this.cam.flatPos.z);
     this.lighting.update(dt, this.player.pos, this.time);
-    this.renderer.renderer.toneMappingExposure = this.lighting.mood.exposure;
+    // phone screens run dimmer (auto-brightness, outdoors): lift their exposure a little more
+    this.renderer.renderer.toneMappingExposure = this.lighting.mood.exposure * (this.isTouch ? 1.3 : 1.06);
     // the sea mirrors the sky: indigo at night, peach and gold at sunrise
     this.world.waterUniforms.uSky.value.setHex(this.lighting.mood.fog).multiplyScalar(0.55);
     this.world.waterUniforms.uGlow.value.setHex(this.lighting.finaleSun > 0.3 ? this.lighting.mood.sunColor : 0xffb36b);
     this.world.update(this.time);
     this.world.shadowReach = this.data.settings.quality === 'high' ? 1e9 : 30;
+    // phone screens: a 30 cm part is ~2 px at 50 m; desktop screens keep them much further
+    this.world.fineReach = this.isTouch ? 50 : 140;
     this.world.cullHorizon(this.cam.flatPos.x, this.cam.flatPos.z, this.cam.flatPos.y);
     this.audio.setListener(this.player.pos.x, this.player.pos.z, this.cam.yaw + Math.PI);
     // the crowd sound follows how many people are around you (their numbers follow the hour)

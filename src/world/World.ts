@@ -576,6 +576,8 @@ export class World {
    */
   /** Static cells further than this (m) cast no shadow (set from the graphics preset). */
   shadowReach = 1e9;
+  /** How far small parts (grille bars, bricks, balusters…) are drawn: beyond it they're under a pixel. */
+  fineReach = 140;
   cullHorizon(camX: number, camZ: number, camH: number) {
     if (!this.batched.length) this.batched = this.root.children.filter((c) => (c as THREE.Mesh).userData?.flatCenter) as THREE.Mesh[];
     const R = PLANET_R;
@@ -586,7 +588,7 @@ export class World {
       const d = Math.hypot(c.x - camX, c.z - camZ);
       // a cell is visible if its tallest point can peek over the curve from the camera
       const reach = camT + Math.sqrt(2 * R * Math.max(0.5, m.userData.maxY as number)) + 4;
-      m.visible = d - m.userData.flatRadius < reach;
+      m.visible = d - m.userData.flatRadius < Math.min(reach, m.userData.fine ? this.fineReach : Infinity);
       if (m.visible) shown++;
       // on lighter graphics settings only nearby cells cast shadows (where you can see them land)
       if (m.userData.casts === undefined) m.userData.casts = m.castShadow;

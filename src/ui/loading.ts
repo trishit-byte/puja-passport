@@ -57,12 +57,14 @@ export const LOADING_HTML = `
 <div class="loading">
   <div class="ld-stars"></div>${petals}
   <div class="loading-inner">
+    <div class="ld-city"><div class="ld-city-bn" lang="bn">আনন্দপুর</div><div class="ld-city-hi" lang="hi">आनंदपुर</div><div class="ld-city-en">ANANDAPUR</div></div>
     ${passport}
     <div class="ld-bn" lang="bn">পূজা পাসপোর্ট</div>
     <h1 class="ld-title">Puja Passport</h1>
     <div class="ld-tag">Ten pandals · one Pujo night · Anandapur</div>
     <div class="ld-diyas" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">${diyas}</div>
     <div class="loading-sub">Lighting the lamps…</div>
+    <div class="ld-loading">Loading<span>.</span><span>.</span><span>.</span></div>
   </div>
 </div>`;
 

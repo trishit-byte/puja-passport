@@ -7,6 +7,7 @@ import '@fontsource/baloo-da-2/bengali-800.css';
 import '@fontsource/baloo-2/devanagari-600.css';
 import '@fontsource/baloo-2/devanagari-800.css';
 import './ui/styles.css';
+import './rendering/fastMatrices';
 import { Game } from './core/Game';
 import { LOADING_HTML, setLoading } from './ui/loading';
 

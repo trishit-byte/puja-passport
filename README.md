@@ -1,3 +1,5 @@
+## 🎮 The game is live at **[puja-passport.pages.dev](https://puja-passport.pages.dev)**
+
 # Puja Passport · পূজা পাসপোর্ট · पूजा पासपोर्ट
 
 *You are in Anandapur. Hop every pandal, eat, dance, and fill your passport before dawn.*

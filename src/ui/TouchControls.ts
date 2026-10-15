@@ -1,8 +1,9 @@
 /**
  * On-screen controls for touch devices (phones in portrait, tablets):
- *  • a floating joystick — touch anywhere in the lower-left zone; push past ~85% to jog
+ *  • a floating joystick — touch anywhere in the lower-left zone; hold it pushed forward for 2 s
+ *    to break into a run (like PUBG's auto-sprint); ease off or turn and you walk again
  *  • swipe anywhere else on the scene to look around (handled by Input on the canvas)
- *  • a large contextual action button (shows what E would do), a run toggle, and the HUD's
+ *  • a large contextual action button (shows what E would do), and the HUD's
  *    existing passport / map / pause buttons
  * Multi-touch: the joystick and the camera swipe work at the same time.
  */
@@ -14,11 +15,14 @@ export class TouchControls {
   private base: HTMLElement;
   private knob: HTMLElement;
   private act: HTMLButtonElement;
-  private run: HTMLButtonElement;
   private pid: number | null = null;
   private ox = 0;
   private oy = 0;
   private running = false;
+  /** When the stick started being held forward (ms), or 0. */
+  private fwdSince = 0;
+  private sprintTimer = 0;
+  private last = { x: 0, y: 0 };
   private R = 56;
 
   constructor(private input: Input) {
@@ -27,19 +31,18 @@ export class TouchControls {
     this.el.innerHTML = `
       <div class="joy-zone" aria-label="Move (joystick)"><div class="joy-base"><div class="joy-knob"></div></div></div>
       <div class="touch-btns">
-        <button class="t-run" aria-label="Run" aria-pressed="false"><span>RUN</span></button>
         <button class="t-act" aria-label="Interact"><span class="t-act-label"></span></button>
       </div>`;
     this.zone = this.el.querySelector('.joy-zone')!;
     this.base = this.el.querySelector('.joy-base')!;
     this.knob = this.el.querySelector('.joy-knob')!;
     this.act = this.el.querySelector('.t-act')!;
-    this.run = this.el.querySelector('.t-run')!;
     this.zone.addEventListener('pointerdown', (e) => this.start(e));
     this.zone.addEventListener('pointermove', (e) => this.move(e));
     const end = (e: PointerEvent) => {
       if (e.pointerId !== this.pid) return;
       this.pid = null;
+      this.stopSprint();
       this.input.setVirtual(0, 0, false);
       this.base.classList.remove('active');
       this.knob.style.transform = 'translate(-50%, -50%)';
@@ -51,13 +54,6 @@ export class TouchControls {
       this.input.push('interact');
       this.act.classList.add('pressed');
       setTimeout(() => this.act.classList.remove('pressed'), 150);
-    });
-    this.run.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      this.running = !this.running;
-      this.run.classList.toggle('on', this.running);
-      this.run.setAttribute('aria-pressed', String(this.running));
-      this.input.setRunToggle(this.running);
     });
   }
 
@@ -88,7 +84,25 @@ export class TouchControls {
     const dead = 0.12;
     const k = mag < dead ? 0 : (mag - dead) / (1 - dead);
     const nx = d > 0 ? dx / d : 0, ny = d > 0 ? dy / d : 0;
-    this.input.setVirtual(nx * k, -ny * k, mag > 0.9);
+    this.last = { x: nx * k, y: -ny * k };
+    // auto-sprint: pushed well forward (within ~40° of straight ahead) for 2 s
+    const forward = k > 0.7 && -ny > 0.75;
+    if (forward && !this.fwdSince) {
+      this.fwdSince = performance.now();
+      this.sprintTimer = window.setTimeout(() => this.setSprint(true), 2000);
+    } else if (!forward && this.fwdSince) this.stopSprint();
+    this.input.setVirtual(this.last.x, this.last.y, false);
+  }
+
+  private setSprint(on: boolean) {
+    this.running = on;
+    this.base.classList.toggle('sprint', on);
+    this.input.setRunToggle(on);
+  }
+  private stopSprint() {
+    clearTimeout(this.sprintTimer);
+    this.fwdSince = 0;
+    if (this.running) this.setSprint(false);
   }
 
   /** Show what the action button would do right now (or dim it). */
@@ -103,6 +117,7 @@ export class TouchControls {
     this.el.classList.toggle('hidden', !on);
     if (!on && this.pid !== null) {
       this.pid = null;
+      this.stopSprint();
       this.input.setVirtual(0, 0, false);
     }
   }

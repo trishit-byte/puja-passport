@@ -472,3 +472,25 @@ html.touch .touch-only { display: block; }
 .about.credit-maker { opacity: 1; font-size: 14px; color: var(--ink); }
 .about.credit-maker a { color: var(--sindoor, #b3121f); font-weight: 800; text-decoration: none; }
 .finale-line.credit-maker { font-size: 15px; opacity: 0.8; margin-top: 10px; }
+
+/* auto-sprint: the joystick knob glows marigold while running */
+.joy-base.sprint .joy-knob { background: var(--marigold, #f6a21e); box-shadow: 0 0 18px rgba(246, 162, 30, 0.8); }
+
+/* phones: the compass is a short, slim strip right at the top edge, out of the way of the view */
+@media (max-width: 820px), (max-height: 520px) {
+  .compass { position: fixed; top: calc(3px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); width: min(50vw, 260px); height: 22px; }
+  .compass-line { top: 9px; height: 1.5px; }
+  .compass-line::after { top: -3px; height: 8px; }
+  .cmark { top: 1px; }
+  .cdot { width: 17px; height: 17px; font-size: 10px; box-shadow: 0 0 6px var(--c), 0 0 0 1.5px rgba(255, 255, 255, 0.85); }
+}
+/* portrait phones: the clock and buttons drop just below the strip */
+@media (max-width: 820px) and (orientation: portrait) {
+  .hud { top: calc(30px + env(safe-area-inset-top)); }
+  .minimap { top: calc(94px + env(safe-area-inset-top)); }
+  .toasts { top: calc(160px + env(safe-area-inset-top)); }
+}
+/* phones on their side: the strip fits between the clock and the buttons */
+@media (max-height: 520px) and (orientation: landscape) {
+  .compass { top: calc(8px + env(safe-area-inset-top)); width: min(34vw, 280px); }
+}

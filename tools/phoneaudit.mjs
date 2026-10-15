@@ -34,7 +34,7 @@ for (const spec of sizes.split(',')) {
   check('touch controls shown, phone defaults to Medium', q.touchUI && q.quality === 'medium', JSON.stringify(q));
   // HUD: nothing overlapping or off-screen
   const hud = await p.evaluate(() => {
-    const sel = ['.clock', '.hud-btns', '.minimap', '.compass', '.joy-zone', '.t-act', '.t-run'];
+    const sel = ['.clock', '.hud-btns', '.minimap', '.compass', '.joy-zone', '.t-act'];
     const r = sel.map((s) => [s, document.querySelector(s)?.getBoundingClientRect()]).filter(([, x]) => x && x.width > 0);
     const off = r.filter(([, x]) => x.left < -1 || x.top < -1 || x.right > innerWidth + 1 || x.bottom > innerHeight + 1).map(([s]) => s);
     const over = [];
@@ -46,6 +46,23 @@ for (const spec of sizes.split(',')) {
     return { off, over };
   });
   check('HUD elements on-screen and not overlapping', !hud.off.length && !hud.over.length, JSON.stringify(hud));
+  const cb = await p.evaluate(() => { const r = document.querySelector('.compass').getBoundingClientRect(); return { top: Math.round(r.top), h: Math.round(r.height), w: Math.round(r.width) }; });
+  check('compass is a slim strip at the top', cb.top < 40 && cb.h <= 26 && cb.w <= 300, JSON.stringify(cb));
+  check('no RUN button', !(await p.$('.t-run')));
+  // hold the joystick forward: walk first, run after 2 s
+  const jz = await p.evaluate(() => { const r = document.querySelector('.joy-zone').getBoundingClientRect(); return { x: r.left + r.width * 0.4, y: r.top + r.height * 0.7 }; });
+  const cdp = await ctx.newCDPSession(p);
+  const touch = (type, x, y) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }] });
+  await touch('touchStart', jz.x, jz.y);
+  await touch('touchMove', jz.x, jz.y - 60);
+  await p.waitForTimeout(800);
+  const early = await p.evaluate(() => window.__game.input.runToggle);
+  await p.waitForTimeout(1700);
+  const late = await p.evaluate(() => window.__game.input.runToggle);
+  await touch('touchEnd', 0, 0);
+  await p.waitForTimeout(200);
+  const after = await p.evaluate(() => window.__game.input.runToggle);
+  check('holding forward walks, then runs after 2 s, and stops on release', !early && late && !after, JSON.stringify({ early, late, after }));
   await shot('2-hud');
   // ground guide near an unvisited pandal
   await p.evaluate(() => { const pd = window.__anandapur.pandals.find((x) => x.id === 'bonedi-bari'); const fx = Math.sin(pd.facing), fz = Math.cos(pd.facing); const ex = pd.x + fx * (pd.radius + 1.5), ez = pd.z + fz * (pd.radius + 1.5); const px = ex + fx * 14, pz = ez + fz * 14; const yaw = Math.atan2(ex - px, ez - pz); window.__anandapur.teleport(px, pz, yaw); window.__game.cam.snapBehind(yaw); });

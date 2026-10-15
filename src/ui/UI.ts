@@ -528,7 +528,7 @@ export class UI {
         <label class="chk"><input type="checkbox" data-k="subtitles" ${s.subtitles ? 'checked' : ''}> Subtitles for spoken cues</label>
       </div>
       <div class="controls-help kbd-only"><b>Controls</b> · WASD/Arrows walk · Shift jog · Drag to look · Wheel zoom · E interact · M map · P passport · C photo · Space advance · Esc pause</div>
-      <div class="controls-help touch-only"><b>Controls</b> · Joystick (lower-left) to walk, push fully or tap RUN to jog · Swipe to look · Pinch to zoom · Round button to interact · Map, passport and ☰ buttons at the top</div>
+      <div class="controls-help touch-only"><b>Controls</b> · Joystick (lower-left) to walk; hold it forward for 2 s to run · Swipe to look · Pinch to zoom · Round button to interact · Map, passport and ☰ buttons at the top</div>
       <div class="pause-buttons">
         ${fromTitle ? '' : '<button class="btn primary" data-a="resume">Resume</button>'}
         <button class="btn" data-a="outfit">Outfit</button>

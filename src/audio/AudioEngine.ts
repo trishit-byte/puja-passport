@@ -519,11 +519,29 @@ export class AudioEngine {
     }
   }
 
-  /** Advance a DJ box to another song (random, different from the current one). */
+  /**
+   * Songs are dealt like a shuffled deck: every song is used once before any repeats, so with
+   * 12 DJ spots and 7 songs all of them are playing somewhere, and the next song a box moves on to
+   * is the least recently dealt one (never the one it just played).
+   */
+  private deck: number[] = [];
+  private dealSong(avoid: number) {
+    if (!this.deck.length) {
+      this.deck = this.songs.map((_, i) => i);
+      for (let i = this.deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
+      }
+    }
+    let k = this.deck.findIndex((x) => x !== avoid);
+    if (k < 0) k = 0;
+    return this.deck.splice(k, 1)[0];
+  }
+
+  /** Advance a DJ box to its next song. */
   nextTrack(ch: DjChannel, initial = false) {
     if (this.songs.length) {
-      let i = Math.floor(Math.random() * this.songs.length);
-      if (this.songs.length > 1 && i === ch.song) i = (i + 1) % this.songs.length;
+      const i = this.dealSong(ch.song);
       ch.playSong(this.songs[i], i, () => this.nextTrack(ch));
     } else ch.playGenerated(initial ? ch.gen : ch.gen + 1);
     return ch.title;

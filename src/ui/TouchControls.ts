@@ -49,6 +49,16 @@ export class TouchControls {
     };
     this.zone.addEventListener('pointerup', end);
     this.zone.addEventListener('pointercancel', end);
+    this.zone.addEventListener('lostpointercapture', end);
+    // the browser must never treat the joystick as page content: no scroll or pull-to-refresh on a
+    // long upward slide, no text-selection / Copy · Look Up callout on a long hold
+    const block = (e: Event) => e.cancelable && e.preventDefault();
+    for (const ev of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) this.zone.addEventListener(ev, block, { passive: false });
+    for (const ev of ['contextmenu', 'selectstart', 'dragstart']) this.el.addEventListener(ev, block);
+    // if the page loses the finger anyway (app switch, system gesture), let go of the stick
+    const release = () => this.pid !== null && end({ pointerId: this.pid } as PointerEvent);
+    window.addEventListener('blur', release);
+    document.addEventListener('visibilitychange', release);
     this.act.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       this.input.push('interact');
@@ -58,7 +68,8 @@ export class TouchControls {
   }
 
   private start(e: PointerEvent) {
-    if (this.pid !== null) return;
+    // a new finger in the zone takes the stick (never stay locked to a touch the browser lost)
+    if (this.pid !== null) this.stopSprint();
     e.preventDefault();
     this.pid = e.pointerId;
     this.zone.setPointerCapture(e.pointerId);
@@ -75,6 +86,9 @@ export class TouchControls {
     if (e.pointerId !== this.pid) return;
     let dx = e.clientX - this.ox, dy = e.clientY - this.oy;
     const d = Math.hypot(dx, dy);
+    // direction from the finger itself (before the knob is clamped to the ring): dragging far past
+    // the ring must still read as full-strength in that direction
+    const nx = d > 0 ? dx / d : 0, ny = d > 0 ? dy / d : 0;
     if (d > this.R) {
       dx *= this.R / d;
       dy *= this.R / d;
@@ -84,10 +98,15 @@ export class TouchControls {
     const dead = 0.1;
     // full walking speed at ~60% of the stick's travel: thumbs rarely push to the very edge
     const k = mag < dead ? 0 : Math.min(1, (mag - dead) / 0.5);
-    const nx = d > 0 ? dx / d : 0, ny = d > 0 ? dy / d : 0;
     this.last = { x: nx * k, y: -ny * k };
     // auto-sprint: pushed forward (within ~55° of straight ahead, half-way out or more) for 2 s
     const forward = mag > 0.45 && -ny > 0.57;
+    // PUBG-style: slide well past the ring, forwards, and you're running at once
+    if (forward && d > this.R * 1.8 && !this.running) {
+      clearTimeout(this.sprintTimer);
+      this.fwdSince = this.fwdSince || performance.now();
+      this.setSprint(true);
+    }
     if (forward && !this.fwdSince) {
       this.fwdSince = performance.now();
       this.sprintTimer = window.setTimeout(() => this.setSprint(true), 2000);

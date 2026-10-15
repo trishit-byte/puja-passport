@@ -63,6 +63,24 @@ for (const spec of sizes.split(',')) {
   await p.waitForTimeout(200);
   const after = await p.evaluate(() => window.__game.input.runToggle);
   check('holding forward walks, then runs after 2 s, and stops on release', !early && late && !after, JSON.stringify({ early, late, after }));
+  // a long slide upward, far past the ring: full-strength forward and running straight away
+  await touch('touchStart', jz.x, jz.y);
+  for (let k = 1; k <= 6; k++) await touch('touchMove', jz.x + 3, jz.y - 30 * k);
+  await p.waitForTimeout(250);
+  const far = await p.evaluate(() => ({ y: +window.__game.input.vy.toFixed(2), run: window.__game.input.runToggle }));
+  // keep holding for 3 s (where a phone would show its Copy / Look Up callout), then let go
+  await p.waitForTimeout(3000);
+  await touch('touchEnd', 0, 0);
+  await p.waitForTimeout(200);
+  const released = await p.evaluate(() => ({ y: window.__game.input.vy, run: window.__game.input.runToggle }));
+  // and the stick still answers afterwards
+  await touch('touchStart', jz.x, jz.y);
+  await touch('touchMove', jz.x, jz.y - 40);
+  await p.waitForTimeout(150);
+  const again = await p.evaluate(() => window.__game.input.vy);
+  await touch('touchEnd', 0, 0);
+  check('long slide up runs at once; stick lets go and works again after a 3 s hold', far.y > 0.95 && far.run && released.y === 0 && !released.run && again > 0.5, JSON.stringify({ far, released, again }));
+  check('no page scroll, text selection or callout on the game', await p.evaluate(() => { const cs = getComputedStyle(document.body); return cs.userSelect === 'none' || cs.webkitUserSelect === 'none'; }));
   await shot('2-hud');
   // ground guide near an unvisited pandal
   await p.evaluate(() => { const pd = window.__anandapur.pandals.find((x) => x.id === 'bonedi-bari'); const fx = Math.sin(pd.facing), fz = Math.cos(pd.facing); const ex = pd.x + fx * (pd.radius + 1.5), ez = pd.z + fz * (pd.radius + 1.5); const px = ex + fx * 14, pz = ez + fz * 14; const yaw = Math.atan2(ex - px, ez - pz); window.__anandapur.teleport(px, pz, yaw); window.__game.cam.snapBehind(yaw); });

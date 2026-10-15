@@ -14,3 +14,4 @@ docs/reference-shots/
 docs/screenshots/*.png
 docs/screenshots/*/
 !docs/screenshots/gallery/
+scratchpad/

@@ -4,7 +4,7 @@
  */
 import * as THREE from 'three';
 import { toon, glow, bend } from '../../rendering/materials';
-import { idolTableau, gate, bediRailing, enclosure, landmarkTower, cyl, sph, cone, disc, torus, type PandalBuild, type Local } from './common';
+import { idolTableau, gate, bediRailing, enclosure, wall, landmarkTower, cyl, sph, cone, disc, torus, type PandalBuild, type Local } from './common';
 import { lamp } from './set1';
 import type { BuildCtx } from './index';
 import { signGeometry, signMaterial, SIGN_ASPECT } from '../props/signs';
@@ -128,9 +128,19 @@ export function buildNeelShagor(ctx: BuildCtx): PandalBuild {
       bulbs.add(L.w(Math.cos(a) * 4.5, Math.sin(a) * 4.5, 12 - k * 3), i % 2 ? 0x5ef2ff : 0xffffff, 0.1, i % 2);
     }
   }
-  // dark ocean hall: walls with wave scallops, a domed blue ceiling
-  for (const x of [-12, 12]) for (let z = -14; z <= 2; z += 2) L.put(sph, z % 4 ? blue : cyan, x, 7.5, z, 1.4, 1.0, 1.4, 0, 0, 0, false);
-  L.put(sph, toon(0x0b2a5b, { side: THREE.DoubleSide }), 0, 4, -7, 26, 14, 18);
+  // dark ocean hall: cloth side walls topped with wave scallops under an open-fronted barrel
+  // vault, so the protima shows through the tunnel and the hall reads as a pandal from outside
+  const HW = 12.5, WH = 7.5, VH = 6, front = 2.5, back = -16.8;
+  for (const x of [-HW, HW]) wall(L, cols, x, front, x, back, WH, deep);
+  for (const x of [-HW, HW]) for (let z = -14; z <= 2; z += 2) L.put(sph, z % 4 ? blue : cyan, x, WH, z, 1.4, 1.0, 1.4, 0, 0, 0, false);
+  const vault = new THREE.CylinderGeometry(1, 1, 1, 32, 1, true, Math.PI / 2, Math.PI).rotateX(Math.PI / 2);
+  const roof = toon(0x0b2a5b, { side: THREE.DoubleSide });
+  L.put(vault, roof, 0, WH, (front + back) / 2, HW, VH, front - back, 0, 0, 0, false);
+  L.put(new THREE.CircleGeometry(1, 32, 0, Math.PI), roof, 0, WH, back, HW, VH, 1, 0, 0, 0, false);
+  for (let i = 0; i <= 24; i++) {
+    const a = Math.PI * (i / 24);
+    bulbs.add(L.w(Math.cos(a) * HW, WH + Math.sin(a) * VH, front + 0.1), i % 2 ? 0x5ef2ff : 0xffffff, 0.12, i % 2);
+  }
   // seaweed and coral
   for (let i = 0; i < 18; i++) {
     const x = (i % 2 ? -1 : 1) * (8 + (i % 4)), z = -14 + (i / 18) * 26;

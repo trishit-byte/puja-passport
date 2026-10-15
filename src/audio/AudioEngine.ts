@@ -104,16 +104,24 @@ export class AudioEngine {
   }
 
   /** Must be called from a user gesture. */
-  async start(spots: SoundSpot[], river: { x: number; z: number }) {
-    // still inside the Start tap here: unlock the song players and set the audio up as media
-    // playback, so the iPhone ring/silent switch doesn't mute the game
+  /**
+   * Call inside any tap: unlock the song players and set the audio up as media playback, so the
+   * iPhone ring/silent switch doesn't mute the game; resume a suspended context.
+   */
+  prime() {
     unlockSongPlayers();
     try {
       const as = (navigator as any).audioSession;
-      if (as) as.type = 'playback';
+      if (as && as.type !== 'playback') as.type = 'playback';
     } catch {
       /* not supported */
     }
+    if (this.ctx && this.ctx.state !== 'running') this.ctx.resume().catch(() => {});
+  }
+
+  async start(spots: SoundSpot[], river: { x: number; z: number }) {
+    // still inside the Start tap here
+    this.prime();
     if (!this.ctx) {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       if (!AC) return;

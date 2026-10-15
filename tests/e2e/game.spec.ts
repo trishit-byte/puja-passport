@@ -479,7 +479,10 @@ test('"Try the Night Again" after 4 AM starts a fresh night (6 PM, no stamps, cl
   await api(page, 'setElapsed', 2699.5);
   await expect(page.locator('.nightover')).toBeVisible({ timeout: 10_000 });
   await page.locator('.nightover [data-a=retry]').click();
-  // the page reloads straight into the new night
+  // the page reloads to the title, whose Start tap begins the new night (and lets phones play sound)
+  await page.waitForSelector('.title-screen .title-buttons .btn', { timeout: 90_000 });
+  await expect(page.locator('.title-screen [data-a=new]')).toContainText('Start the Night');
+  await page.locator('.title-screen [data-a=new]').click();
   await page.waitForFunction(() => (window as any).__game?.phase === 'play' && (window as any).__anandapur?.night().elapsed > 0.5, null, { timeout: 90_000 });
   await page.waitForTimeout(1500);
   const night = await api(page, 'night');

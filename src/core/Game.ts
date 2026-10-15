@@ -1,4 +1,5 @@
 /** Top-level game: owns systems, routes input, runs the frame loop. */
+import { track } from '../utils/track';
 import * as THREE from 'three';
 import { releasedGeometry } from '../utils/geometry';
 import { Renderer, QUALITY } from '../rendering/Renderer';
@@ -299,6 +300,8 @@ export class Game {
     window.addEventListener('beforeunload', () => this.save());
     // browsers only allow sound after a user gesture: (re)start audio on the first touch/key
     const unlock = () => {
+      // every touch, even on the title screen: unlock the phone's song players right away
+      this.audio.prime();
       if (this.phase !== 'title') this.audio.start(this.city.dhakSpots(), { x: 40, z: 108 }).then(() => this.audio.applySettings(this.data.audio));
     };
     // (iOS counts the end of a tap, not its start, as permission to play sound)
@@ -335,18 +338,15 @@ export class Game {
     const st = this.data.session;
     if (action === 'new' && (st.status !== 'none' || this.data.stamps.length)) {
       // a clean slate: stamps, discoveries and the clock all reset; settings/outfit are kept
-      Object.assign(this.data, { stamps: [], discovered: [], secrets: [], finaleSeen: false, player: null, session: { elapsed: 0, status: 'active', completedAt: null } });
+      // (status 'none': after the reload the title offers "Start the Night", and that tap is what
+      // lets a phone play sound — an automatic start after a reload would begin silent)
+      Object.assign(this.data, { stamps: [], discovered: [], secrets: [], finaleSeen: false, player: null, session: { elapsed: 0, status: 'none', completedAt: null } });
       // the clock too, and no more saving: frames keep running until the page unloads, and each
       // one would copy the old 4:00 AM clock back into the fresh save (then the night would
       // end again the moment it restarted)
       this.night = new SimClock(0);
       this.store.save(this.data);
       this.save = () => {};
-      try {
-        sessionStorage.setItem('anandapur.autostart', '1');
-      } catch {
-        /* ignore */
-      }
       location.reload();
       return;
     }
@@ -362,6 +362,7 @@ export class Game {
   }
 
   private begin() {
+    track('start');
     this.audio.start(this.city.dhakSpots(), { x: 40, z: 108 }).then(() => this.audio.applySettings(this.data.audio));
     this.phase = 'intro';
     this.introT = 0;
@@ -435,12 +436,14 @@ export class Game {
   }
 
   private onStamped(id: PandalId) {
+    track('stamp');
     this.ui.setCount(this.data.stamps.length);
     const st = this.data.session;
     if (this.progress.allStamps && st.status === 'active') {
       // success is registered the moment the eighth stamp lands — it can't be revoked afterwards
       st.status = 'success';
       st.completedAt = this.night.elapsed;
+      track('complete');
     }
     this.save();
     this.ui.stampCelebration(id, this.data, () => {
@@ -448,7 +451,7 @@ export class Game {
       if (this.progress.allStamps && !this.data.finaleSeen && this.data.stamps[this.data.stamps.length - 1] === id) {
         if (st.status === 'success') this.ui.toast(`Passport complete at ${formatClock(this.night.simSeconds)} with ${formatRemaining(this.night.remaining)} to spare!`, { duration: 5 });
         this.ui.finaleInvite();
-      } else if (!this.progress.allStamps) this.ui.toast(st.status === 'active' ? `${8 - this.data.stamps.length} more pandals to find — ${formatRemaining(this.night.remaining)} left before 4 AM.` : `${8 - this.data.stamps.length} more pandals to find.`);
+      } else if (!this.progress.allStamps) this.ui.toast(st.status === 'active' ? `${PANDALS.length - this.data.stamps.length} more pandals to find — ${formatRemaining(this.night.remaining)} left before 4 AM.` : `${PANDALS.length - this.data.stamps.length} more pandals to find.`);
     });
   }
 

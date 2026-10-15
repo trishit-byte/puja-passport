@@ -10,6 +10,7 @@ import './ui/styles.css';
 import './rendering/fastMatrices';
 import { Game } from './core/Game';
 import { LOADING_HTML, setLoading } from './ui/loading';
+import { trackVisit } from './utils/track';
 
 /** Yield to the browser so the loading bar can paint between heavy build steps. */
 const frame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
@@ -42,6 +43,7 @@ async function boot() {
   ui.querySelector('.loading')?.classList.add('fade');
   setTimeout(() => ui.querySelector('.loading')?.remove(), 800);
   game.showTitle();
+  trackVisit();
   let auto = params.has('autostart');
   try {
     if (sessionStorage.getItem('anandapur.autostart')) {

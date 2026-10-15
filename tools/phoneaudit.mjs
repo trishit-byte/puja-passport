@@ -109,6 +109,9 @@ for (const spec of sizes.split(',')) {
   const card = await p.evaluate(() => { const r = document.querySelector('.nightover-card').getBoundingClientRect(); return r.left >= -1 && r.right <= innerWidth + 1; });
   check('night-over card fits', card);
   await p.tap('.nightover [data-a=retry]');
+  await p.waitForSelector('.title-screen [data-a=new]', { timeout: 120000 });
+  await p.tap('.title-screen [data-a=new]');
+  await p.evaluate(() => document.querySelector('.tutorial [data-a=skip]')?.click());
   await p.waitForFunction(() => window.__game?.phase === 'play' && window.__anandapur?.night().elapsed > 0.5, null, { timeout: 120000 });
   const n = await p.evaluate(() => ({ ...window.__anandapur.night(), stamps: window.__anandapur.getState().stamps.length }));
   check('"Try the Night Again" starts a fresh night', n.elapsed < 30 && n.status === 'active' && n.stamps === 0, JSON.stringify(n));
